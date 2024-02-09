@@ -62,17 +62,10 @@ const loginUser = asyncHandler(async(req, res)=>{
     };
 });
 
-//@desc     Get current user
-//@route    GET /api/users/me
-//@access   Pravite
-const getMe = asyncHandler (async (req, res) => {
-    res.send('me')
-});
-
 //@desc     Logout / Clear the cookie
 //@route    POST /api/auth/logout
 //@access   Private
-const logout = asyncHandler(async(req, res)=>{
+const logoutUser = asyncHandler(async(req, res)=>{
     res.cookie('jwt', ' ', {
         httpOnly: true,
         expires: new Date(0)
@@ -83,9 +76,49 @@ const logout = asyncHandler(async(req, res)=>{
     })
 });
 
+//@desc     Get user by ID
+//@route    GET /api/users/:id
+//@access   Private/Admin
+const getUserById = asyncHandler(async(req, res) => {
+    const user = await User.findById(req.params.id).select('-password');
+
+    if(user){
+        res.status(200).json(user)
+    }else{
+        res.status(404);
+        throw new Error('Utilisateur non trouvé');
+    }
+});
+
+//@desc     Update user 
+//@route    PUT /api/users/:id
+//@access   Private/admin
+const updateUser = asyncHandler(async(req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if(user){
+        user.name = req.body.name || user.name
+        user.email = req.body.email || user.email
+        
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin
+        });
+    }else{
+        res.status(404);
+        throw new Error('Utilisateur non trouveé');
+    }
+});
+
 
 export {
     registerUser,
     loginUser,
-    getMe
+    getUserById,
+    updateUser,
+    logoutUser
 }
